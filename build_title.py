@@ -4,99 +4,110 @@ from gimpfu import *
 from os import path
 
 
-def build_title(image, drawable, title_type, assets_path):
-    pdb.gimp_image_convert_rgb(image)
+EVENT_RANKS = ["t1",
+               "t2",
+               "t3",
+               "t10",
+               "t100",
+               "t1000",
+               "t2500",
+               "t5000",
+               "t10000",
+               "tded"
+               ]
+
+SCORE_RANKS = ["t1",
+               "t2",
+               "t3",
+               "t10",
+               "t100",
+               "tboat"
+               ]
+
+
+def build_title(image, _, title_type, assets_path):
+    # Convert image to RGB
+    if pdb.gimp_image_base_type(image) != 0:
+        pdb.gimp_image_convert_rgb(image)
+    filename = path.splitext(pdb.gimp_image_get_filename(image))[0]
+
+    # Event
     if title_type == 0:
-        event_ranks = ["t1", "t2", "t3", "t10", "t100", "t1000", "t2500", "t5000", "t10000", "tded"
-                       ]
-        for rank in event_ranks:
-            pdb.gimp_image_undo_group_start(image)
+        for rank in EVENT_RANKS:
             rank_asset = "{}/event_{}.png".format(assets_path, rank)
-            new_layer = pdb.gimp_file_load_layer(image, rank_asset)
-            pdb.gimp_image_insert_layer(image, new_layer, None, -1)
+            new_layer = setup_layers(image, rank_asset)
 
             # Flatten and save image
             new_image = pdb.gimp_image_duplicate(image)
             layer = pdb.gimp_image_merge_visible_layers(
                 new_image, CLIP_TO_IMAGE)
-            filename = path.splitext(pdb.gimp_image_get_filename(image))[0]
             save_file = "{}_{}.png".format(filename, rank)
             pdb.file_png_save(new_image, layer, save_file, "event_{}.png".format(
                 rank), False, 9, True, False, False, True, True)
-            pdb.gimp_image_delete(new_image)
-            pdb.gimp_image_remove_layer(image, new_layer)
-            pdb.gimp_image_undo_group_end(image)
 
+            teardown_layers(new_image, image, new_layer)
+
+    # Score (Round 1)
     elif title_type == 1:
-        score_r1_ranks = ["t1",
-                          "t2",
-                          "t3",
-                          "t10",
-                          "t100",
-                          "tboat"
-                          ]
-        for rank in score_r1_ranks:
-            pdb.gimp_image_undo_group_start(image)
+        for rank in SCORE_RANKS:
             rank_asset = "{}/score_{}_r1.png".format(assets_path, rank)
-            new_layer = pdb.gimp_file_load_layer(image, rank_asset)
-            pdb.gimp_image_insert_layer(image, new_layer, None, -1)
+            new_layer = setup_layers(image, rank_asset)
 
             # Flatten and save image
             new_image = pdb.gimp_image_duplicate(image)
             layer = pdb.gimp_image_merge_visible_layers(
                 new_image, CLIP_TO_IMAGE)
-            filename = path.splitext(pdb.gimp_image_get_filename(image))[0]
             save_file = "{}_{}.png".format(filename, rank)
             pdb.file_png_save(new_image, layer, save_file, "score_{}_r1.png".format(
                 rank), False, 9, True, False, False, True, True)
-            pdb.gimp_image_delete(new_image)
-            pdb.gimp_image_remove_layer(image, new_layer)
-            pdb.gimp_image_undo_group_end(image)
 
+            teardown_layers(new_image, image, new_layer)
+
+    # Score (Round 2)
     elif title_type == 2:
-        score_r2_ranks = ["t1",
-                          "t2",
-                          "t3",
-                          "t10",
-                          "t100",
-                          "tboat"
-                          ]
-        for rank in score_r2_ranks:
-            pdb.gimp_image_undo_group_start(image)
+        for rank in SCORE_RANKS:
             rank_asset = "{}/score_{}_r2.png".format(assets_path, rank)
-            new_layer = pdb.gimp_file_load_layer(image, rank_asset)
-            pdb.gimp_image_insert_layer(image, new_layer, None, -1)
+            new_layer = setup_layers(image, rank_asset)
 
             # Flatten and save image
             new_image = pdb.gimp_image_duplicate(image)
             layer = pdb.gimp_image_merge_visible_layers(
                 new_image, CLIP_TO_IMAGE)
-            filename = path.splitext(pdb.gimp_image_get_filename(image))[0]
             save_file = "{}_{}.png".format(filename, rank)
             pdb.file_png_save(new_image, layer, save_file, "score_{}_r2.png".format(
                 rank), False, 9, True, False, False, True, True)
-            pdb.gimp_image_delete(new_image)
-            pdb.gimp_image_remove_layer(image, new_layer)
-            pdb.gimp_image_undo_group_end(image)
 
+            teardown_layers(new_image, image, new_layer)
+
+    # EX Title
     elif title_type == 3:
-        pdb.gimp_image_undo_group_start(image)
         rank_asset = "{}/try_clear_extra.png".format(assets_path)
-        new_layer = pdb.gimp_file_load_layer(image, rank_asset)
-        pdb.gimp_image_insert_layer(image, new_layer, None, -1)
+        new_layer = setup_layers(image, rank_asset)
 
         # Flatten and save image
         new_image = pdb.gimp_image_duplicate(image)
         layer = pdb.gimp_image_merge_visible_layers(new_image, CLIP_TO_IMAGE)
-        filename = path.splitext(pdb.gimp_image_get_filename(image))[0]
         save_file = "{}_ex.png".format(filename)
         pdb.file_png_save(new_image, layer, save_file, "ex.png",
                           False, 9, True, False, False, True, True)
-        pdb.gimp_image_delete(new_image)
-        pdb.gimp_image_remove_layer(image, new_layer)
-        pdb.gimp_image_undo_group_end(image)
+
+        teardown_layers(new_image, image, new_layer)
 
     return
+
+
+def setup_layers(image, rank_asset):
+    pdb.gimp_image_undo_group_start(image)
+    new_layer = pdb.gimp_file_load_layer(image, rank_asset)
+    pdb.gimp_image_insert_layer(image, new_layer, None, -1)
+
+    return new_layer
+
+
+def teardown_layers(new_image, image, new_layer):
+    pdb.gimp_image_delete(new_image)
+    pdb.gimp_image_remove_layer(image, new_layer)
+    pdb.gimp_image_undo_group_end(image)
 
 
 register(
@@ -110,7 +121,7 @@ register(
     "*",
     [(PF_OPTION, "title_type", "Title Type", 0, ("Event", "Score (Round 1)", "Score (Round 2)", "EX Title")),
      (PF_DIRNAME, "assets_path", "Assets Location",
-      "C:/Users/Gordon/Downloads/Bandori Titles/combined assets")
+      path.expanduser("~") + "/Downloads/Bandori Titles/combined assets")
      ],
     [],
     build_title)
